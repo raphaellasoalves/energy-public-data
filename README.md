@@ -1,38 +1,45 @@
-# ANP Public Data Crawlers
+# ANP Data Crawlers
 
-Automated data collection from the **ANP (Agência Nacional do Petróleo, Gás Natural e Biocombustíveis)** public Power BI dashboards.
+Python crawlers for extracting data from public ANP (Agência Nacional do Petróleo, Gás Natural e Biocombustíveis) Power BI dashboards.
 
-These crawlers extract structured tabular data from ANP's interactive panels and export them as `.xlsx` files for further analysis.
+The ANP publishes operational and regulatory data from Brazil's oil & gas sector through interactive Power BI panels. This repository automates the extraction of tabular data from those panels into structured Excel files.
 
 ---
 
 ## Crawlers
 
 | Script | Panel | Output |
-|--------|-------|--------|
-| `exploratory_phase.py` | Painel Fase de Exploração — Blocos sob Contrato | `anp_blocks_under_contract.xlsx` |
-| `well_interventions.py` | Painel Intervenção em Poços (filter: Perfuração) | `anp_well_interventions.xlsx` |
-| `development_fields.py` | BI ANP — Campos em Desenvolvimento | `anp_development_fields.xlsx` |
+|---|---|---|
+| `exploratory_phase.py` | Blocos sob Contrato — Fase Exploratória | `anp_exploratory_phase.xlsx` |
+| `well_interventions.py` | Intervenção em Poços (filter: Perfuração) | `anp_well_interventions.xlsx` |
+| `development_fields.py` | Campos em Desenvolvimento | `anp_development_fields.xlsx` |
 
----
+### Data collected
 
-## How it works
+**Exploratory Phase** — contract blocks under exploration: operator, basin, area, contractual deadlines, drilled wells, committed work units.
 
-The ANP dashboards are hosted on Power BI embedded (public access). Since the data is rendered inside a virtualized grid — meaning only visible rows and columns are loaded in the DOM at any given time — a standard HTML scraper cannot capture the full dataset.
+**Well Interventions** — drilling interventions: well names (ANP and operator), field, basin, probe, objective, start/end dates, days in intervention.
 
-These crawlers use **Selenium** to simulate user interaction: scrolling vertically and horizontally across the table, collecting visible cells at each step, and assembling the complete dataset from the accumulated snapshots.
+**Development Fields** — fields in production development: field, basin, operator, environment, contract details, water depth, status, production dates, field classification.
 
 ---
 
 ## Requirements
 
-- Python 3.9+
-- Google Chrome installed
+- Python 3.8+
+- Google Chrome (latest)
 - ChromeDriver is managed automatically via `webdriver-manager`
 
-Install dependencies:
+---
+
+## Setup
 
 ```bash
+# Clone the repository
+git clone https://github.com/raphaellasoalves/anp-data-crawlers.git
+cd anp-data-crawlers
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
@@ -40,7 +47,7 @@ pip install -r requirements.txt
 
 ## Usage
 
-Run any crawler directly from the project root:
+Run each crawler individually:
 
 ```bash
 python crawlers/exploratory_phase.py
@@ -48,22 +55,41 @@ python crawlers/well_interventions.py
 python crawlers/development_fields.py
 ```
 
-Output files are saved to the `output/` folder (created automatically if it doesn't exist).
+Output files are saved to the `output/` folder (created automatically on first run).
+
+> **Note:** The crawlers open a Chrome browser window and interact with the Power BI interface. Execution time varies depending on table size and network speed.
 
 ---
 
-## Data sources
+## Why crawlers?
 
-All data is publicly available via ANP's official Power BI portal:
+The ANP Power BI panels do not offer a native data export or download option. The data is only accessible through the interactive interface, with no API or downloadable file available. These crawlers were built to fill that gap, enabling the extraction of structured data for analysis and integration into data pipelines.
 
-- [ANP — Painel Fase de Exploração](https://www.gov.br/anp/pt-br)
-- [ANP — Intervenção em Poços](https://www.gov.br/anp/pt-br)
-- [ANP — Campos em Desenvolvimento](https://www.gov.br/anp/pt-br)
+---
+
+## How it works
+
+The ANP panels are hosted on Power BI Embedded, which renders data as virtualized DOM tables — meaning only the visible rows and columns exist in the HTML at any given moment. Standard scraping approaches (requests + BeautifulSoup) do not work here.
+
+These crawlers use **Selenium** to:
+1. Navigate to the public Power BI URL
+2. Locate and enter focus mode on the target table
+3. Scroll the table systematically — both vertically and horizontally — collecting all visible cells at each step
+4. Deduplicate and pivot the collected cells into a structured DataFrame
+5. Export the result to Excel
+
+Horizontal scroll is handled by detecting and dragging the Power BI scrollbar handle, with stale element recovery and end-of-table detection based on container position tracking.
+
+---
+
+## Data source
+
+All data is publicly available through ANP's official BI panels:
+[https://www.gov.br/anp/pt-br](https://www.gov.br/anp/pt-br)
 
 ---
 
 ## Author
 
-**Raphaella Alves**  
-Data Analyst & Data Engineer  
-[LinkedIn](https://linkedin.com/in/raphaella-alves-a44ab047)
+**Raphaella Alves** — Data Analyst & Data Engineer  
+[LinkedIn](https://linkedin.com/in/raphaella-alves-a44ab047) · [GitHub](https://github.com/raphaellasoalves)
